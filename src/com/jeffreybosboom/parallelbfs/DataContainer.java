@@ -14,6 +14,18 @@ public interface DataContainer {
 	public byte get(int index);
 	public void set(int index, byte b);
 	public int size();
+
+	public default int indexOf(byte b) {
+		return indexOf(b, 0, size());
+	}
+
+	public default int indexOf(byte b, int beginInclusive, int endExclusive) {
+		for (int i = beginInclusive; i < endExclusive; ++i)
+			if (get(i) == b)
+				return i;
+		return -1;
+	}
+
 	public default Stream<Byte> stream() {
 		return IntStream.range(0, size()).mapToObj(this::get);
 	}
