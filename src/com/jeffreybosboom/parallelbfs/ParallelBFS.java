@@ -1,8 +1,8 @@
 package com.jeffreybosboom.parallelbfs;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -30,7 +30,7 @@ public final class ParallelBFS<S> {
 
 	public Optional<S> find(S startState) {
 		if (isSolution.test(startState)) return Optional.of(startState);
-		Set<S> frontier = Collections.singleton(startState);
+		List<S> frontier = Collections.singletonList(startState);
 		int generation = 0;
 		while (!frontier.isEmpty()) {
 			System.out.println("beginning generation "+(++generation));
@@ -39,7 +39,7 @@ public final class ParallelBFS<S> {
 						.flatMap(successors)
 						.peek(s -> {if (isSolution.test(s)) throw new SolutionException(s);})
 						.filter(filters != null ? filters : s -> true)
-						.collect(Collectors.toSet());
+						.collect(Collectors.toList());
 			} catch (SolutionException e) {
 				@SuppressWarnings("unchecked")
 				S solution = (S)e.solution;
