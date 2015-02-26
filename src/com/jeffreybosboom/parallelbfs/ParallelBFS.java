@@ -17,9 +17,15 @@ public final class ParallelBFS<S> {
 	private final Function<S, Stream<S>> successors;
 	private final Predicate<S> isSolution;
 	private Predicate<S> filters = null;
+	private boolean parallel = true;
 	public ParallelBFS(Function<S, Stream<S>> successors, Predicate<S> isSolution) {
 		this.successors = successors;
 		this.isSolution = isSolution;
+	}
+
+	public ParallelBFS<S> sequential() {
+		parallel = false;
+		return this;
 	}
 
 	public ParallelBFS<S> filter(Predicate<S> filter) {
@@ -37,7 +43,9 @@ public final class ParallelBFS<S> {
 		while (frontier.length > 0) {
 			System.out.println("beginning generation "+(++generation));
 			try {
-				frontier = Arrays.stream(frontier)
+				Stream<S> stream = Arrays.stream(frontier);
+				if (parallel) stream = stream.parallel();
+				frontier = stream
 						.flatMap(successors)
 						.peek(s -> {if (isSolution.test(s)) throw new SolutionException(s);})
 						.filter(filters != null ? filters : s -> true)
