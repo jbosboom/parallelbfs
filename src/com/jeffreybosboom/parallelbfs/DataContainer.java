@@ -11,6 +11,11 @@ import java.util.stream.Stream;
  * @since 2/20/2015
  */
 public interface DataContainer {
+	public interface ByteComparator {
+		public int compare(byte a, byte b);
+	}
+	//TODO: provide an UNSIGNED static comparator?
+
 	public byte get(int index);
 	public void set(int index, byte b);
 	public int size();
@@ -24,6 +29,31 @@ public interface DataContainer {
 			if (get(i) == b)
 				return i;
 		return -1;
+	}
+
+	public default void sort() {
+		sort(Byte::compare);
+	}
+
+	public default void sort(ByteComparator cmp) {
+		sort(0, size(), cmp);
+	}
+
+	public default void sort(int beginInclusive, int endExclusive) {
+		sort(beginInclusive, endExclusive, Byte::compare);
+	}
+
+	public default void sort(int beginInclusive, int endExclusive, ByteComparator cmp) {
+		//insertion sort, based on Wikipedia pseudocode
+		for (int i = beginInclusive; i < endExclusive; ++i) {
+			byte x = get(i);
+			int j = i;
+			while (j > beginInclusive && cmp.compare(get(j-1), x) > 0) {
+				set(j, get(j-1));
+				--j;
+			}
+			set(j, x);
+		}
 	}
 
 	public default Stream<Byte> stream() {
@@ -165,6 +195,14 @@ final class DataContainerN implements DataContainer {
 	@Override
 	public int size() {
 		return data.length;
+	}
+	@Override
+	public void sort() {
+		Arrays.sort(data);
+	}
+	@Override
+	public void sort(int beginInclusive, int endExclusive) {
+		Arrays.sort(data, beginInclusive, endExclusive);
 	}
 	@Override
 	public boolean equals(Object obj) {
