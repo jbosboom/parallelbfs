@@ -1,11 +1,10 @@
 package com.jeffreybosboom.parallelbfs;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -30,16 +29,19 @@ public final class ParallelBFS<S> {
 
 	public Optional<S> find(S startState) {
 		if (isSolution.test(startState)) return Optional.of(startState);
-		List<S> frontier = Collections.singletonList(startState);
+		@SuppressWarnings("unchecked")
+		S[] frontier = (S[])new Object[]{startState};
+		@SuppressWarnings("unchecked")
+		IntFunction<S[]> arrayNew = l -> (S[])new Object[l];
 		int generation = 0;
-		while (!frontier.isEmpty()) {
+		while (frontier.length > 0) {
 			System.out.println("beginning generation "+(++generation));
 			try {
-				frontier = frontier.parallelStream()
+				frontier = Arrays.stream(frontier)
 						.flatMap(successors)
 						.peek(s -> {if (isSolution.test(s)) throw new SolutionException(s);})
 						.filter(filters != null ? filters : s -> true)
-						.collect(Collectors.toList());
+						.toArray(arrayNew);
 			} catch (SolutionException e) {
 				@SuppressWarnings("unchecked")
 				S solution = (S)e.solution;
