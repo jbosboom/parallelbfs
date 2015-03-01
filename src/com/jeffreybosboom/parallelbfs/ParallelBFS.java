@@ -1,7 +1,10 @@
 package com.jeffreybosboom.parallelbfs;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
@@ -16,6 +19,7 @@ import java.util.stream.Stream;
 public final class ParallelBFS<S> {
 	private final Function<S, Stream<S>> successors;
 	private final Predicate<S> isSolution;
+	private final List<Consumer<? super List<S>>> preGenerationActions = new ArrayList<>();
 	private Predicate<S> filters = null;
 	private boolean parallel = true;
 	public ParallelBFS(Function<S, Stream<S>> successors, Predicate<S> isSolution) {
@@ -33,15 +37,23 @@ public final class ParallelBFS<S> {
 		return this;
 	}
 
+	public ParallelBFS<S> beforeGeneration(Consumer<? super List<S>> action) {
+		preGenerationActions.add(action);
+		return this;
+	}
+
 	public Optional<S> find(S startState) {
 		if (isSolution.test(startState)) return Optional.of(startState);
+
 		@SuppressWarnings("unchecked")
 		S[] frontier = (S[])new Object[]{startState};
 		@SuppressWarnings("unchecked")
 		IntFunction<S[]> arrayNew = l -> (S[])new Object[l];
-		int generation = 0;
+
 		while (frontier.length > 0) {
-			System.out.println("beginning generation "+(++generation));
+			final List<S> finalFrontier = Arrays.asList(frontier);
+			preGenerationActions.forEach(c -> c.accept(finalFrontier));
+
 			try {
 				Stream<S> stream = Arrays.stream(frontier);
 				if (parallel) stream = stream.parallel();
